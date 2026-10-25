@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>getmydrug</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #eef3f5; --surface: #ffffff; --ink: #12252d; --muted: #5a6f78; --line: #d3dfe3;
+  --teal: #0c6b73; --teal-soft: #dcecee; --cap: #e2512b; --cap-ink: #ffffff;
+  --ok: #1d7a4b; --ok-soft: #dff3e7; --bad: #b3261e; --bad-soft: #fbe3e1; --warn: #9a5b00; --warn-soft: #fbefd9;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d1a1f; --surface: #15262d; --ink: #e6f0f2; --muted: #93a9b1; --line: #28404a;
+  --teal: #4fc0c9; --teal-soft: #17353b; --cap: #ff6a42; --cap-ink: #1a0b06;
+  --ok: #5fcf93; --ok-soft: #163526; --bad: #ff8a80; --bad-soft: #3a1a18; --warn: #f0b259; --warn-soft: #2e2412; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0d1a1f; --surface: #15262d; --ink: #e6f0f2; --muted: #93a9b1; --line: #28404a;
+  --teal: #4fc0c9; --teal-soft: #17353b; --cap: #ff6a42; --cap-ink: #1a0b06;
+  --ok: #5fcf93; --ok-soft: #163526; --bad: #ff8a80; --bad-soft: #3a1a18; --warn: #f0b259; --warn-soft: #2e2412; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 28px; }
+.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.capsule { width: 34px; height: 16px; border-radius: 8px; transform: rotate(-35deg); background: linear-gradient(90deg, var(--cap) 0 50%, var(--teal) 50% 100%); box-shadow: inset 0 0 0 2px var(--surface); outline: 2px solid var(--ink); }
+.brand h1 { margin: 0; font: 700 1.6rem/1 var(--font-display); letter-spacing: -0.02em; }
+.tagline { color: var(--muted); font-size: 0.9rem; margin: 0; }
+.pill { font: 500 0.85rem var(--font-body); background: none; border: 1px solid var(--line); color: var(--ink); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+.pill:hover { border-color: var(--teal); }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+.card h2 { margin: 0 0 6px; font: 700 1.1rem var(--font-display); }
+.card .sub { margin: 0 0 12px; color: var(--muted); font-size: 0.9rem; }
+.drop { border: 2px dashed var(--line); border-radius: 12px; padding: 18px; text-align: center; color: var(--muted); cursor: pointer; }
+.drop.over { border-color: var(--teal); background: var(--teal-soft); color: var(--ink); }
+.drop input { display: none; }
+.plist { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.plist li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
+.plist .name { flex: 1; min-width: 0; }
+.plist .name b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plist .name span { color: var(--muted); font-size: 0.85rem; }
+.plist .x { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 1.1rem; }
+.status { font-size: 0.8rem; padding: 2px 8px; border-radius: 999px; background: var(--teal-soft); color: var(--teal); white-space: nowrap; }
+.status.err { background: var(--bad-soft); color: var(--bad); }
+
+.chat { display: flex; flex-direction: column; gap: 14px; }
+.msg { display: flex; gap: 10px; }
+.msg.me { justify-content: flex-end; }
+.avatar { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--teal); display: grid; place-items: center; margin-top: 2px; }
+.avatar::after { content: ""; width: 14px; height: 7px; border-radius: 4px; transform: rotate(-35deg); background: linear-gradient(90deg, var(--cap-ink) 0 50%, var(--teal-soft) 50% 100%); }
+.bubble { padding: 10px 14px; border-radius: 16px; max-width: min(100%, 600px); min-width: 0; overflow-wrap: anywhere; }
+.bot .bubble { background: var(--surface); border: 1px solid var(--line); border-top-left-radius: 4px; }
+.me .bubble { background: var(--cap); color: var(--cap-ink); border-top-right-radius: 4px; font-weight: 500; }
+.bubble p { margin: 0 0 6px; } .bubble p:last-child { margin: 0; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.opt { font: 500 0.9rem var(--font-body); padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--teal); background: var(--surface); color: var(--teal); cursor: pointer; }
+.opt:hover, .opt.on { background: var(--teal); color: var(--cap-ink); }
+.opt.go { border-color: var(--cap); color: var(--cap); } .opt.go:hover { background: var(--cap); color: var(--cap-ink); }
+.num { font: 1rem var(--font-body); padding: 8px 12px; border: 1.5px solid var(--line); border-radius: 10px; width: 120px; background: var(--surface); color: var(--ink); }
+.crit { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.crit li { border-left: 4px solid var(--line); padding: 6px 10px; border-radius: 6px; background: var(--bg); }
+.crit li.met { border-color: var(--ok); } .crit li.not_met { border-color: var(--bad); } .crit li.confirm { border-color: var(--warn); }
+.crit b { display: block; } .crit .why { font-size: 0.9rem; color: var(--muted); }
+.crit q { display: block; margin-top: 4px; font: 0.82rem var(--font-mono); color: var(--muted); quotes: "\201C" "\201D"; }
+.tag { display: inline-block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; padding: 1px 8px; border-radius: 999px; margin-left: 6px; }
+.tag.met { background: var(--ok-soft); color: var(--ok); } .tag.not_met { background: var(--bad-soft); color: var(--bad); } .tag.confirm { background: var(--warn-soft); color: var(--warn); }
+.decision { font: 700 1.05rem var(--font-display); margin: 0 0 8px; }
+pre.note { white-space: pre-wrap; font: 0.85rem/1.5 var(--font-mono); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin: 8px 0; }
+.copy { font: 600 0.9rem var(--font-body); padding: 8px 16px; border-radius: 999px; border: 1.5px solid var(--cap); background: none; color: var(--cap); cursor: pointer; }
+.copy:hover { background: var(--cap); color: var(--cap-ink); }
+.next { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 10px; }
+.tile { display: flex; flex-direction: column; gap: 4px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; text-decoration: none; color: inherit; background: var(--bg); }
+.tile b { font-size: 0.95rem; } .tile span { font-size: 0.85rem; color: var(--muted); } .tile .go { color: var(--teal); font-weight: 600; margin-top: auto; }
+.composer { display: flex; gap: 8px; } .composer input { flex: 1; font: 1rem var(--font-body); padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); }
+.composer button { font: 600 0.95rem var(--font-body); padding: 10px 18px; border-radius: 999px; border: 0; background: var(--teal); color: var(--cap-ink); cursor: pointer; }
+.fine { font-size: 0.82rem; color: var(--muted); margin: 0; }
+.spin { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--teal); border-radius: 50%; animation: s 0.8s linear infinite; vertical-align: -2px; margin-right: 6px; }
+@keyframes s { to { transform: rotate(360deg); } }
+.err { background: var(--bad-soft); color: var(--bad); border-radius: 10px; padding: 10px 12px; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><div class="capsule"></div><div><h1>getmydrug</h1><p class="tagline">Find out what your insurer needs before it covers your medicine.</p></div></div>
+    <button class="pill" id="reset" type="button">Start over</button>
+  </header>
+
+  <section class="card" id="policies">
+    <h2>Your policies</h2>
+    <p class="sub">Drop your insurers' drug coverage policy PDFs here. They stay in this browser; each is read once to build the questions.</p>
+    <label class="drop" id="drop"><input type="file" id="file" accept="application/pdf" multiple>Drop PDFs here, or click to choose</label>
+    <ul class="plist" id="plist"></ul>
+    <p class="fine" id="pfine"></p>
+  </section>
+
+  <section class="chat" id="chat" aria-live="polite"></section>
+
+  <form class="composer" id="composer">
+    <input id="ask" type="text" placeholder="Ask a question about the policy…" autocomplete="off">
+    <button type="submit">Send</button>
+  </form>
+  <p class="fine">Coverage information from the plan's own policy document. Not medical advice; the plan and your prescriber make the final decision. Your answers are only sent to read the policy and are not stored.</p>
+</div>
+
+<script>
+(function () {
+  var API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.endsWith('.github.io'))
+    ? (localStorage.getItem('getmydrug_api') || '/api/claude') : '/api/claude';
+
+  // ---------- storage (IndexedDB) ----------
+  var DB;
+  function openDB() {
+    return new Promise(function (res, rej) {
+      var r = indexedDB.open('getmydrug', 1);
+      r.onupgradeneeded = function () { r.result.createObjectStore('policies', { keyPath: 'id' }); };
+      r.onsuccess = function () { DB = r.result; res(DB); };
+      r.onerror = function () { rej(r.error); };
+    });
+  }
+  function tx(mode, fn) {
+    return new Promise(function (res, rej) {
+      var t = DB.transaction('policies', mode), s = t.objectStore('policies'), out = fn(s);
+      t.oncomplete = function () { res(out && out.result !== undefined ? out.result : out); };
+      t.onerror = function () { rej(t.error); };
+    });
+  }
+  function allPolicies() { return tx('readonly', function (s) { return s.getAll(); }); }
+  function putPolicy(p) { return tx('readwrite', function (s) { s.put(p); }); }
+  function delPolicy(id) { return tx('readwrite', function (s) { s.delete(id); }); }
+
+  // ---------- helpers ----------
+  var chat = document.getElementById('chat');
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function botMsg(node) { var m = el('div', 'msg bot'); m.appendChild(el('div', 'avatar')); var b = el('div', 'bubble'); if (typeof node === 'string') b.appendChild(el('p', null, node)); else b.appendChild(node); m.appendChild(b); chat.appendChild(m); m.scrollIntoView({ behavior: 'smooth', block: 'end' }); return b; }
+  function meMsg(text) { var m = el('div', 'msg me'); m.appendChild(el('div', 'bubble', text)); chat.appendChild(m); }
+  function options(list, onPick, cls) { var o = el('div', 'opts'); list.forEach(function (t) { var b = el('button', 'opt' + (cls ? ' ' + cls : ''), t); b.type = 'button'; b.addEventListener('click', function () { o.querySelectorAll('.opt').forEach(function (x) { x.disabled = true; }); onPick(t); }); o.appendChild(b); }); return o; }
+  function fileToBase64(file) { return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(r.result.split(',')[1]); }; r.onerror = rej; r.readAsDataURL(file); }); }
+  function api(task, payload) {
+    payload.task = task;
+    return fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }); });
+  }
+
+  // ---------- policies panel ----------
+  var plist = document.getElementById('plist'), pfine = document.getElementById('pfine');
+  function renderPolicies(list) {
+    plist.innerHTML = '';
+    list.forEach(function (p) {
+      var li = el('li'); var n = el('div', 'name');
+      n.appendChild(el('b', null, p.card ? (p.card.payer + ' — ' + p.card.drugs.map(function (d) { return d.name; }).join(', ')) : p.filename));
+      n.appendChild(el('span', null, p.card ? (p.card.policy_title + (p.card.effective_date ? ' · effective ' + p.card.effective_date : '') + ' · ' + p.filename) : (p.error ? p.error : 'Reading…')));
+      li.appendChild(n);
+      li.appendChild(el('span', 'status' + (p.error ? ' err' : ''), p.card ? p.card.criteria.length + ' criteria' : (p.error ? 'Failed' : 'Reading')));
+      var x = el('button', 'x', '✕'); x.type = 'button'; x.title = 'Remove'; x.addEventListener('click', function () { delPolicy(p.id).then(refresh); });
+      li.appendChild(x); plist.appendChild(li);
+    });
+    pfine.textContent = list.length ? '' : 'No policies yet. Add one PDF per insurer policy (for example your top insurer’s migraine, GLP-1 or biologic policy).';
+  }
+  var POLICIES = [];
+  function refresh() { return allPolicies().then(function (l) { POLICIES = l; renderPolicies(l); return l; }); }
+
+  function addFiles(files) {
+    Array.prototype.forEach.call(files, function (f) {
+      if (f.type !== 'application/pdf') return;
+      if (f.size > 4 * 1024 * 1024) { botMsg(el('div', 'err', f.name + ' is over 4 MB. Split the PDF or export a smaller copy.')); return; }
+      var p = { id: f.name + ':' + f.size, filename: f.name, size: f.size, added: Date.now() };
+      fileToBase64(f).then(function (b64) {
+        p.pdf_base64 = b64; return putPolicy(p).then(refresh).then(function () { return api('extract', { pdf_base64: b64, filename: f.name }); });
+      }).then(function (card) {
+        p.card = card; delete p.error; return putPolicy(p);
+      }).catch(function (e) { p.error = e.message; return putPolicy(p); })
+        .then(refresh).then(function () { if (!state.policy) start(); });
+    });
+  }
+  var drop = document.getElementById('drop'), fileIn = document.getElementById('file');
+  fileIn.addEventListener('change', function () { addFiles(fileIn.files); fileIn.value = ''; });
+  ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop', function (e) { addFiles(e.dataTransfer.files); });
+
+  // ---------- conversation ----------
+  var state = { policy: null, drug: null, use: null, answers: {}, qi: 0 };
+  function start() {
+    chat.innerHTML = ''; state = { policy: null, drug: null, use: null, answers: {}, qi: 0 };
+    var ready = POLICIES.filter(function (p) { return p.card; });
+    if (!ready.length) { botMsg('Hi. Add an insurer’s policy PDF above and I’ll turn it into a few questions you can answer before your appointment.'); return; }
+    var w = el('div'); w.appendChild(el('p', null, 'Hi. Which insurance plan are you on?'));
+    w.appendChild(options(ready.map(function (p) { return p.card.payer + ' (' + p.card.drugs.map(function (d) { return d.name; }).join(', ') + ')'; }), function (t) {
+      meMsg(t); state.policy = ready[ready.map(function (p) { return p.card.payer + ' (' + p.card.drugs.map(function (d) { return d.name; }).join(', ') + ')'; }).indexOf(t)]; askDrug();
+    }));
+    botMsg(w);
+  }
+  function askDrug() {
+    var c = state.policy.card;
+    if (c.drugs.length === 1) { state.drug = c.drugs[0]; return askUse(); }
+    var w = el('div'); w.appendChild(el('p', null, 'Which medicine is this about?'));
+    w.appendChild(options(c.drugs.map(function (d) { return d.name + (d.generic ? ' (' + d.generic + ')' : ''); }), function (t) { meMsg(t); state.drug = c.drugs[c.drugs.map(function (d) { return d.name + (d.generic ? ' (' + d.generic + ')' : ''); }).indexOf(t)]; askUse(); }));
+    botMsg(w);
+  }
+  function askUse() {
+    var uses = state.drug.uses || [];
+    if (uses.length <= 1) { state.use = uses[0] || 'any'; return showPolicy(); }
+    var w = el('div'); w.appendChild(el('p', null, 'What would you use ' + state.drug.name + ' for?'));
+    w.appendChild(options(uses, function (t) { meMsg(t); state.use = t; showPolicy(); }));
+    botMsg(w);
+  }
+  function relevantCriteria() {
+    var c = state.policy.card;
+    return c.criteria.filter(function (k) {
+      var drugOk = !k.drugs.length || k.drugs.some(function (d) { return d.toLowerCase().indexOf(state.drug.name.toLowerCase()) > -1 || state.drug.name.toLowerCase().indexOf(d.toLowerCase()) > -1; });
+      var useOk = !k.use || k.use === 'any' || state.use === 'any' || k.use.toLowerCase().indexOf(state.use.toLowerCase().slice(0, 6)) > -1 || state.use.toLowerCase().indexOf(k.use.toLowerCase().slice(0, 6)) > -1;
+      return drugOk && useOk;
+    });
+  }
+  function showPolicy() {
+    var c = state.policy.card, crits = relevantCriteria();
+    var w = el('div');
+    w.appendChild(el('p', null, 'Here is what ' + c.payer + ' requires before covering ' + state.drug.name + (state.use !== 'any' ? ' for ' + state.use : '') + ':'));
+    var ul = el('ul', 'crit'); crits.forEach(function (k) { var li = el('li'); li.appendChild(el('b', null, k.requirement)); if (k.quote) li.appendChild(el('q', null, k.quote)); ul.appendChild(li); }); w.appendChild(ul);
+    if (c.notes && c.notes.length) { var n = el('p', 'fine', 'Also: ' + c.notes.join(' · ')); n.style.marginTop = '10px'; w.appendChild(n); }
+    w.appendChild(el('p', 'fine', 'Source: ' + c.policy_title + (c.program_number ? ' (' + c.program_number + ')' : '') + (c.effective_date ? ', effective ' + c.effective_date : '') + '.'));
+    w.appendChild(options(['Is this for me? Check my situation', 'Where can I compare prices?', 'Check another medicine'], function (t) {
+      meMsg(t);
+      if (t.indexOf('Is this') === 0) askNext();
+      else if (t.indexOf('Where') === 0) { showNext(); }
+      else start();
+    }, 'go'));
+    botMsg(w);
+  }
+  function questions() {
+    var ids = {}; relevantCriteria().forEach(function (k) { ids[k.id] = true; });
+    return state.policy.card.questions.filter(function (q) { return !q.criterion_ids.length || q.criterion_ids.some(function (i) { return ids[i]; }); });
+  }
+  function askNext() {
+    var qs = questions();
+    if (state.qi === 0) botMsg('Your answers stay in this tab and are only used to read the policy. Nothing is saved.');
+    if (state.qi >= qs.length) return runCheck();
+    var q = qs[state.qi]; state.qi++;
+    var w = el('div'); w.appendChild(el('p', null, q.text));
+    if (q.type === 'yesno') w.appendChild(options(['Yes', 'No', 'Not sure'], function (t) { meMsg(t); state.answers[q.text] = t; askNext(); }));
+    else if (q.type === 'single') w.appendChild(options(q.options.concat(q.options.indexOf('Not sure') > -1 ? [] : ['Not sure']), function (t) { meMsg(t); state.answers[q.text] = t; askNext(); }));
+    else if (q.type === 'number') {
+      var row = el('div', 'opts'); var inp = el('input', 'num'); inp.type = 'number'; inp.min = '0'; var go = el('button', 'opt go', 'Continue'); go.type = 'button';
+      go.addEventListener('click', function () { if (inp.value === '') return; meMsg(inp.value); state.answers[q.text] = Number(inp.value); go.disabled = true; askNext(); });
+      row.appendChild(inp); row.appendChild(go); w.appendChild(row);
+    } else {
+      var picked = {}; var o = el('div', 'opts');
+      q.options.concat(['None of these']).forEach(function (t) { var b = el('button', 'opt', t); b.type = 'button'; b.addEventListener('click', function () { if (t === 'None of these') { picked = {}; o.querySelectorAll('.opt').forEach(function (x) { x.classList.remove('on'); }); } else delete picked['None of these']; picked[t] = !picked[t]; b.classList.toggle('on', picked[t]); }); o.appendChild(b); });
+      var go2 = el('button', 'opt go', 'Continue'); go2.type = 'button';
+      go2.addEventListener('click', function () { var list = Object.keys(picked).filter(function (k) { return picked[k]; }); meMsg(list.length ? list.join(', ') : 'None of these'); state.answers[q.text] = list; o.querySelectorAll('.opt').forEach(function (x) { x.disabled = true; }); askNext(); });
+      o.appendChild(go2); w.appendChild(o);
+    }
+    botMsg(w);
+  }
+  function runCheck() {
+    var b = botMsg(el('p', null, 'Comparing your answers with the policy…')); b.firstChild.insertBefore(el('span', 'spin'), b.firstChild.firstChild);
+    api('check', { pdf_base64: state.policy.pdf_base64, drug: state.drug.name, use: state.use, answers: state.answers }).then(function (r) {
+      b.innerHTML = '';
+      var head = { likely_meets: 'You appear to meet the plan’s requirements.', likely_does_not_meet: 'It looks like one or more requirements are not met yet.', needs_confirmation: 'Some points need confirming with your prescriber.' };
+      b.appendChild(el('p', 'decision', head[r.decision] || r.decision));
+      var ul = el('ul', 'crit');
+      r.criteria.forEach(function (k) { var li = el('li', k.status); var t = el('b', null, k.requirement); var tag = el('span', 'tag ' + k.status, k.status.replace('_', ' ')); t.appendChild(tag); li.appendChild(t); li.appendChild(el('div', 'why', k.reason)); if (k.quote) li.appendChild(el('q', null, k.quote)); ul.appendChild(li); });
+      b.appendChild(ul);
+      b.appendChild(el('p', null, r.patient_summary)).style.marginTop = '12px';
+      if (r.missing && r.missing.length) b.appendChild(el('p', 'fine', 'Still needed: ' + r.missing.join('; ')));
+      var pre = el('pre', 'note', r.clinic_checklist); b.appendChild(el('p', null, 'For your clinic (copy this into the prior authorization request):')).style.marginTop = '12px'; b.appendChild(pre);
+      var copy = el('button', 'copy', 'Copy clinic checklist'); copy.type = 'button';
+      copy.addEventListener('click', function () { navigator.clipboard.writeText(r.clinic_checklist).then(function () { copy.textContent = 'Copied'; }); });
+      b.appendChild(copy);
+      b.appendChild(options(['Where can I compare prices?', 'Check another medicine'], function (t) { meMsg(t); if (t.indexOf('Where') === 0) showNext(); else start(); }, 'go'));
+    }).catch(function (e) { b.innerHTML = ''; b.appendChild(el('div', 'err', 'The check did not run: ' + e.message)); });
+  }
+  function showNext() {
+    var d = state.drug, q = encodeURIComponent(d.name);
+    var w = el('div'); w.appendChild(el('p', null, 'If the plan will not approve it, or you want to compare, these are the places to look:'));
+    var g = el('div', 'next');
+    function tile(title, sub, href, label) { var t = el('a', 'tile'); t.href = href; t.target = '_blank'; t.rel = 'noopener'; t.appendChild(el('b', null, title)); t.appendChild(el('span', null, sub)); t.appendChild(el('span', 'go', label)); return t; }
+    g.appendChild(tile('GoodRx', 'Coupon prices at nearby pharmacies.', 'https://www.goodrx.com/' + d.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), 'Open GoodRx'));
+    g.appendChild(tile('Mark Cuban Cost Plus Drugs', 'Low-markup pharmacy; mostly generics.', 'https://costplusdrugs.com/medications/?search=' + q, 'Open Cost Plus'));
+    g.appendChild(tile('Manufacturer savings program', 'Copay card or patient assistance from the maker (commercial insurance only for copay cards).', 'https://www.google.com/search?q=' + q + '+savings+card+patient+assistance', 'Find program'));
+    g.appendChild(tile('NeedyMeds', 'Directory of patient assistance programs.', 'https://www.needymeds.org/', 'Open NeedyMeds'));
+    w.appendChild(g);
+    w.appendChild(el('p', 'fine', 'Cash and coupon prices usually do not count toward an insurance deductible.'));
+    w.appendChild(options(['Check another medicine'], function () { start(); }, 'go'));
+    botMsg(w);
+  }
+
+  // ---------- free text ----------
+  document.getElementById('composer').addEventListener('submit', function (e) {
+    e.preventDefault(); var inp = document.getElementById('ask'); var v = inp.value.trim(); if (!v) return; inp.value = ''; meMsg(v);
+    if (/start over|restart|reset/i.test(v)) return start();
+    var pol = state.policy || POLICIES.filter(function (p) { return p.card; })[0];
+    if (!pol) return botMsg('Add a policy PDF first and I can answer from it.');
+    var b = botMsg(el('p', null, 'Reading the policy…')); b.firstChild.insertBefore(el('span', 'spin'), b.firstChild.firstChild);
+    api('ask', { pdf_base64: pol.pdf_base64, question: v }).then(function (r) { b.innerHTML = ''; b.appendChild(el('p', null, r.answer)); })
+      .catch(function (err) { b.innerHTML = ''; b.appendChild(el('div', 'err', err.message)); });
+  });
+  document.getElementById('reset').addEventListener('click', start);
+
+  openDB().then(refresh).then(start).catch(function (e) { botMsg(el('div', 'err', 'This browser could not open local storage: ' + e.message)); });
+})();
+</script>
+</body>
+</html>
