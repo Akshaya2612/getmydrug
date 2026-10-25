@@ -21,9 +21,19 @@ export const FORMULARIES: Formulary[] = [
   { id: "cigna-mkt-2026", insurer: "cigna", coverageType: "marketplace", name: "Individual & Family 2026", source: "Plan FHIR API" },
 ];
 
+/** IDs referenced elsewhere (e.g. the eligibility survey's suggested alternatives). */
+export const RXCUI = {
+  ubrelvy: "2268236",
+  nurtec: "2272552",
+  qulipta: "atogepant-mock", // placeholder ID, not a real RxCUI
+  sumatriptan: "313157",
+  rizatriptan: "312035",
+} as const;
+
 export const DRUGS: Drug[] = [
   { rxcui: "2268236", name: "Ubrelvy (ubrogepant)", strengths: ["50 mg", "100 mg"], form: "tablet" },
   { rxcui: "2272552", name: "Nurtec ODT (rimegepant)", strengths: ["75 mg"], form: "orally disintegrating tablet" },
+  { rxcui: RXCUI.qulipta, name: "Qulipta (atogepant)", strengths: ["10 mg", "30 mg", "60 mg"], form: "tablet" },
   { rxcui: "313157", name: "Sumatriptan (generic Imitrex)", strengths: ["25 mg", "50 mg", "100 mg"], form: "tablet" },
   { rxcui: "312035", name: "Rizatriptan (generic Maxalt)", strengths: ["5 mg", "10 mg"], form: "tablet" },
   { rxcui: "314076", name: "Lisinopril", strengths: ["10 mg", "20 mg", "40 mg"], form: "tablet" },
@@ -33,9 +43,9 @@ export const DRUGS: Drug[] = [
 
 /** Which drugs treat which diagnosis (real version: RxClass "may_treat"). */
 export const DRUGS_BY_DIAGNOSIS: Record<string, string[]> = {
-  "G43.909": ["2268236", "2272552", "313157", "312035"],
-  "G43.109": ["2268236", "2272552", "313157", "312035"],
-  "G43.709": ["2268236", "2272552", "313157", "312035"],
+  "G43.909": ["2268236", "2272552", RXCUI.qulipta, "313157", "312035"],
+  "G43.109": ["2268236", "2272552", RXCUI.qulipta, "313157", "312035"],
+  "G43.709": ["2268236", "2272552", RXCUI.qulipta, "313157", "312035"],
   I10: ["314076", "197361"],
   "E11.9": ["861007"],
 };
@@ -49,6 +59,15 @@ const GEPANT_COVERAGE: Coverage = {
   quantityLimit: "16 tablets per 30 days",
 };
 
+const QULIPTA_COVERAGE: Coverage = {
+  covered: true,
+  tier: 3,
+  priorAuth: true,
+  stepTherapy: true,
+  stepTherapyNote: "Must have tried 2 daily preventive medicines first.",
+  quantityLimit: "30 tablets per 30 days",
+};
+
 const GENERIC_COVERAGE: Coverage = {
   covered: true,
   tier: 1,
@@ -60,6 +79,7 @@ const GENERIC_COVERAGE: Coverage = {
 export const COVERAGE_BY_DRUG: Record<string, Coverage> = {
   "2268236": GEPANT_COVERAGE,
   "2272552": GEPANT_COVERAGE,
+  [RXCUI.qulipta]: QULIPTA_COVERAGE,
   "313157": { ...GENERIC_COVERAGE, quantityLimit: "9 tablets per 30 days" },
   "312035": { ...GENERIC_COVERAGE, quantityLimit: "12 tablets per 30 days" },
   "314076": GENERIC_COVERAGE,
@@ -71,12 +91,23 @@ export const COVERAGE_BY_DRUG: Record<string, Coverage> = {
 export const CASH_PRICE_PER_UNIT: Record<string, number> = {
   "2268236": 144,
   "2272552": 160,
+  [RXCUI.qulipta]: 34,
   "313157": 2.5,
   "312035": 3,
   "314076": 0.4,
   "197361": 0.35,
   "861007": 0.3,
 };
+
+/** Mock pharmacies: price multiplier vs. the base coupon price, and distance. */
+export const PHARMACIES: { name: string; multiplier: number; distanceMiles: number }[] = [
+  { name: "Costco Pharmacy", multiplier: 0.85, distanceMiles: 4.2 },
+  { name: "Walmart Pharmacy", multiplier: 0.92, distanceMiles: 2.1 },
+  { name: "Kroger Pharmacy", multiplier: 1.0, distanceMiles: 1.4 },
+  { name: "Walgreens", multiplier: 1.18, distanceMiles: 0.6 },
+  { name: "CVS Pharmacy", multiplier: 1.25, distanceMiles: 0.9 },
+  { name: "Rite Aid", multiplier: 1.3, distanceMiles: 3.0 },
+];
 
 /** Mock flat copay by tier. */
 export const COPAY_BY_TIER: Record<number, number> = { 1: 10, 2: 35, 3: 70 };

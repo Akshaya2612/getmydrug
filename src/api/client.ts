@@ -6,6 +6,7 @@ import type {
   EstimateResponse,
   Formulary,
   Insurer,
+  PharmacyPrice,
   PriceEstimate,
 } from "../types";
 import {
@@ -16,6 +17,7 @@ import {
   DRUGS,
   DRUGS_BY_DIAGNOSIS,
   FORMULARIES,
+  PHARMACIES,
 } from "./mockData";
 
 /** Everything the UI needs from the backend. Swap implementations freely. */
@@ -79,7 +81,13 @@ const mockApi: DrugCostApi = {
       { kind: "coupon", amount: cash * 0.67, label: "Discount coupon price", source: "Mock", asOf },
     );
 
-    return { drug, strength: sel.strength, quantity: sel.quantity, coverage, prices };
+    const pharmacyPrices: PharmacyPrice[] = PHARMACIES.map((p) => ({
+      pharmacy: p.name,
+      amount: Math.round(cash * 0.67 * p.multiplier * 100) / 100,
+      distanceMiles: p.distanceMiles,
+    }));
+
+    return { drug, strength: sel.strength, quantity: sel.quantity, coverage, prices, pharmacyPrices };
   },
 };
 

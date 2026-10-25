@@ -75,6 +75,13 @@ export type PriceEstimate = {
   asOf: string; // ISO date
 };
 
+export type PharmacyPrice = {
+  pharmacy: string;
+  /** Discount-card / coupon price at this pharmacy, USD */
+  amount: number;
+  distanceMiles: number;
+};
+
 export type EstimateRequest = {
   diagnosis: Diagnosis;
   plan: PlanSelection;
@@ -87,4 +94,6 @@ export type EstimateResponse = {
   quantity: number;
   coverage: Coverage;
   prices: PriceEstimate[];
+  /** Per-pharmacy coupon prices, any order */
+  pharmacyPrices: PharmacyPrice[];
 };
