@@ -1,5 +1,7 @@
 # getmydrug
 
+Live demo: https://getmydrug.vercel.app/
+
 **Find out what your insurer needs before it covers your medicine — before the pharmacy counter, not after.**
 
 A clinic drops its insurers' drug coverage policy PDFs onto one web page. Claude reads each policy once and turns it into a short set of plain-language questions. A patient answers them on the clinic's device and gets:
