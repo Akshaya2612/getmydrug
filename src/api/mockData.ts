@@ -25,7 +25,7 @@ export const FORMULARIES: Formulary[] = [
 export const RXCUI = {
   ubrelvy: "2268236",
   nurtec: "2272552",
-  qulipta: "atogepant-mock", // placeholder ID, not a real RxCUI
+  qulipta: "2571836", // Qulipta (atogepant) 60 mg tablet, per RxNorm/NDC 0074-7094
   sumatriptan: "313157",
   rizatriptan: "312035",
 } as const;
